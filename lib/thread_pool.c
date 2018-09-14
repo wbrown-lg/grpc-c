@@ -3,7 +3,72 @@
  * All rights reserved.
  */
 
+#define _GNU_SOURCE
+#include <pthread.h>
+#include <string.h>
+
 #include "thread_pool.h"
+
+#define GPR_ARRAY_SIZE(array) (sizeof(array) / sizeof(*(array)))
+
+struct thd_arg {
+  void (*body)(void* arg); /* body of a thread */
+  void* arg;                /* argument to a thread */
+  const char* name;         /* name of thread. Can be nullptr. */
+};
+
+static void* thread_body(void* v) {
+  struct thd_arg a = *(struct thd_arg*)v;
+  free(v);
+  if (a.name != NULL) {
+#if GPR_APPLE_PTHREAD_NAME
+    /* Apple supports 64 characters, and will truncate if it's longer. */
+    pthread_setname_np(a.name);
+#elif GPR_LINUX_PTHREAD_NAME
+    /* Linux supports 16 characters max, and will error if it's longer. */
+    char buf[16];
+    size_t buf_len = GPR_ARRAY_SIZE(buf) - 1;
+    strncpy(buf, a.name, buf_len);
+    buf[buf_len] = '\0';
+    pthread_setname_np(pthread_self(), buf)
+#endif   // GPR_APPLE_PTHREAD_NAME
+  }
+  (*a.body)(a.arg);
+  //dec_thd_count();
+  return NULL;
+}
+
+static int gpr_thd_new(gpr_thd_id* t, const char* thd_name,
+                void (*thd_body)(void* arg), void* arg) {
+  int thread_started;
+  pthread_attr_t attr;
+  pthread_t p;
+  /* don't use gpr_malloc as we may cause an infinite recursion with
+   * the profiling code */
+  struct thd_arg* a = (struct thd_arg*)malloc(sizeof(*a));
+  GPR_ASSERT(a != NULL);
+  a->body = thd_body;
+  a->arg = arg;
+  a->name = thd_name;
+  //inc_thd_count();
+
+  GPR_ASSERT(pthread_attr_init(&attr) == 0);
+  GPR_ASSERT(pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE) == 0);
+
+  thread_started = (pthread_create(&p, &attr, &thread_body, a) == 0);
+
+  GPR_ASSERT(pthread_attr_destroy(&attr) == 0);
+
+  if (!thread_started) {
+    /* don't use gpr_free, as this was allocated using malloc (see above) */
+    free(a);
+    //dec_thd_count();
+  }
+  *t = (gpr_thd_id)p;
+  return thread_started;
+}
+
+static void gpr_thd_join(gpr_thd_id t) { pthread_join((pthread_t)t, NULL); }
 
 /*
  * Thread function that will wait for work and execute callbacks from callback
@@ -158,9 +223,8 @@ grpc_c_thread_pool_add (grpc_c_thread_pool_t *pool,
 	pool->gctp_nthreads++;
 	gcthread->gct_pool = pool;
 	gpr_mu_init(&gcthread->gct_lock);
-	gpr_thd_options toptions = gpr_thd_options_default();
-	if (!gpr_thd_new(&gcthread->gct_thread, gc_thread_func, 
-			 (void *)gcthread, &toptions)) {
+	if (!gpr_thd_new(&gcthread->gct_thread, "grpc-c_gc", gc_thread_func, 
+			 (void *)gcthread)) {
 	    gpr_log(GPR_ERROR, "Failed to create thread");
 	    return 1;
 	}

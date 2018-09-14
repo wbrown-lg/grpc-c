@@ -79,7 +79,7 @@ gc_client_create_by_host (const char *host, const char *id,
     /*
      * Register server connect and disconnect callbacks
      */
-    client->gcc_channel_connectivity_cq = grpc_completion_queue_create(NULL);
+    client->gcc_channel_connectivity_cq = grpc_completion_queue_create(NULL, NULL, NULL);
     if (client->gcc_channel_connectivity_cq == NULL) {
 	gpr_log(GPR_ERROR, "Failed to create completion queue for server "
 		"connect/disconnect notifications");
@@ -577,7 +577,7 @@ gc_client_prepare_async_ops (grpc_c_client_t *client,
     bzero(context->gcc_method, sizeof(struct grpc_c_method_t));
 
     context->gcc_state = GRPC_C_CLIENT_START;
-    context->gcc_cq = grpc_completion_queue_create(NULL);
+    context->gcc_cq = grpc_completion_queue_create(NULL, NULL, NULL);
     grpc_c_grpc_set_cq_callback(context->gcc_cq, gc_handle_client_event);
 
     int op_count = context->gcc_op_count;
@@ -743,7 +743,7 @@ gc_client_prepare_sync_ops (grpc_c_client_t *client,
     gpr_mu_init(context->gcc_lock);
 
     context->gcc_state = GRPC_C_CLIENT_START;
-    context->gcc_cq = grpc_completion_queue_create(NULL);
+    context->gcc_cq = grpc_completion_queue_create(NULL, NULL, NULL);
     grpc_c_grpc_set_cq_callback(context->gcc_cq, gc_handle_client_event);
 
     int op_count = context->gcc_op_count;
@@ -874,7 +874,7 @@ gc_client_prepare_unary_ops (grpc_c_client_t *client,
     bzero(context->gcc_method, sizeof(struct grpc_c_method_t));
 
     context->gcc_state = GRPC_C_CLIENT_START;
-    context->gcc_cq = grpc_completion_queue_create(NULL);
+    context->gcc_cq = grpc_completion_queue_create(NULL, NULL, NULL);
     grpc_c_grpc_set_cq_callback(context->gcc_cq, gc_handle_client_event);
 
     int op_count = context->gcc_op_count;
