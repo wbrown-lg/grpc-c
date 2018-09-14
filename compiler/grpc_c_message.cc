@@ -71,7 +71,7 @@
 #include "grpc_c_helpers.h"
 #include <protoc-c/c_helpers.h>
 
-
+#include <boost/scoped_ptr.hpp>
 #include <google/protobuf/io/printer.h>
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/wire_format.h>
@@ -88,7 +88,7 @@ GrpcCMessageGenerator::GrpcCMessageGenerator(const Descriptor* descriptor,
 					     const string& dllexport_decl) 
     : descriptor_(descriptor), 
     dllexport_decl_(dllexport_decl), 
-    grpc_c_nested_generators_(new scoped_ptr<GrpcCMessageGenerator>[
+    grpc_c_nested_generators_(new boost::scoped_ptr<GrpcCMessageGenerator>[
 			       descriptor->nested_type_count()]) {
 
   for (int i = 0; i < descriptor->nested_type_count(); i++) {

@@ -70,6 +70,8 @@
 
 #include <string>
 #include <vector>
+#include <boost/scoped_array.hpp>
+#include <boost/scoped_ptr.hpp>
 #include <google/protobuf/stubs/common.h>
 #include <protoc-c/c_field.h>
 #include "grpc_c_service.h"
@@ -98,7 +100,7 @@ class FileGenerator {
  public:
   // See generator.cc for the meaning of dllexport_decl.
   explicit FileGenerator(const FileDescriptor* file,
-                         const string& dllexport_decl);
+                         const std::string& dllexport_decl);
   ~FileGenerator();
 
   void GenerateHeader(io::Printer* printer);
@@ -108,15 +110,15 @@ class FileGenerator {
  private:
   const FileDescriptor* file_;
 
-  scoped_array<scoped_ptr<c::MessageGenerator> > message_generators_;
-  scoped_array<scoped_ptr<GrpcCMessageGenerator> > grpc_c_message_generators_;
-  scoped_array<scoped_ptr<MessagePackUnpackGenerator> > message_pack_unpack_generators_;
-  scoped_array<scoped_ptr<c::EnumGenerator> > enum_generators_;
-  scoped_array<scoped_ptr<GrpcCServiceGenerator> > service_generators_;
-  scoped_array<scoped_ptr<c::ExtensionGenerator> > extension_generators_;
+  boost::scoped_array<boost::scoped_ptr<c::MessageGenerator> > message_generators_;
+  boost::scoped_array<boost::scoped_ptr<GrpcCMessageGenerator> > grpc_c_message_generators_;
+  boost::scoped_array<boost::scoped_ptr<MessagePackUnpackGenerator> > message_pack_unpack_generators_;
+  boost::scoped_array<boost::scoped_ptr<c::EnumGenerator> > enum_generators_;
+  boost::scoped_array<boost::scoped_ptr<GrpcCServiceGenerator> > service_generators_;
+  boost::scoped_array<boost::scoped_ptr<c::ExtensionGenerator> > extension_generators_;
 
   // E.g. if the package is foo.bar, package_parts_ is {"foo", "bar"}.
-  vector<string> package_parts_;
+  std::vector<std::string> package_parts_;
 
   GOOGLE_DISALLOW_EVIL_CONSTRUCTORS(FileGenerator);
 };

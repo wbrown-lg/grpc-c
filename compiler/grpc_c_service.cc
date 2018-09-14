@@ -75,7 +75,7 @@ namespace compiler {
 namespace grpc_c {
 
 GrpcCServiceGenerator::GrpcCServiceGenerator(const ServiceDescriptor* descriptor,
-					     const string& dllexport_decl)
+					     const std::string& dllexport_decl)
   : descriptor_(descriptor) {
   vars_["name"] = descriptor_->name();
   vars_["fullname"] = descriptor_->full_name();
@@ -102,7 +102,7 @@ void GrpcCServiceGenerator::GenerateMainHFile(io::Printer* printer)
 void GrpcCServiceGenerator::GenerateCallersDeclarations(io::Printer* printer)
 {
   /* Service and init */
-  string lcfullname = c::FullNameToLower(descriptor_->full_name());
+  std::string lcfullname = c::FullNameToLower(descriptor_->full_name());
 
   /* Methods array */
   printer->Print(vars_, "\nextern const char *$lcfullname$__methods[];\n");
@@ -111,7 +111,7 @@ void GrpcCServiceGenerator::GenerateCallersDeclarations(io::Printer* printer)
 
   for (int i = 0; i < descriptor_->method_count(); i++) {
     const MethodDescriptor *method = descriptor_->method(i);
-    string lcname = c::CamelToLower(method->name());
+    std::string lcname = c::CamelToLower(method->name());
     vars_["method"] = lcname;
     vars_["metpad"] = c::ConvertToSpaces(lcname);
     vars_["input_typename"] = c::FullNameToC(method->input_type()->full_name());
@@ -152,7 +152,7 @@ void GrpcCServiceGenerator::GenerateDescriptorDeclarations(io::Printer* printer)
 // Service init
 void GrpcCServiceGenerator::GenerateCServiceFile(io::Printer* printer)
 {
-  string lcfullname = c::FullNameToLower(descriptor_->full_name());
+  std::string lcfullname = c::FullNameToLower(descriptor_->full_name());
   vars_["method_count"] = c::SimpleItoa(descriptor_->method_count());
   printer->Print(vars_, 
 		 "\nint\n"
@@ -163,7 +163,7 @@ void GrpcCServiceGenerator::GenerateCServiceFile(io::Printer* printer)
 
   for (int i = 0; i < descriptor_->method_count(); i++) {
     const MethodDescriptor *method = descriptor_->method(i);
-    string lcname = c::CamelToLower(method->name());
+    std::string lcname = c::CamelToLower(method->name());
     vars_["method"] = lcname;
     vars_["metpad"] = c::ConvertToSpaces(lcname);
     vars_["input_typename"] = c::FullNameToC(method->input_type()->full_name());
@@ -254,7 +254,7 @@ void GrpcCServiceGenerator::GenerateCallersImplementations(io::Printer* printer)
 {
   /* methods array */
   printer->Print(vars_, "\nconst char *$lcfullname$__methods[] = {\n");
-  string fullname = descriptor_->full_name();
+  std::string fullname = descriptor_->full_name();
   for (int i = 0; i < descriptor_->method_count(); i++) {
     const MethodDescriptor *method = descriptor_->method(i);
     vars_["method"] = method->name();
@@ -262,12 +262,12 @@ void GrpcCServiceGenerator::GenerateCallersImplementations(io::Printer* printer)
   }
   printer->Print(vars_, "};\n");
 
-  string lcfullname = c::FullNameToLower(fullname);
+  std::string lcfullname = c::FullNameToLower(fullname);
 
   for (int i = 0; i < descriptor_->method_count(); i++) {
     const MethodDescriptor *method = descriptor_->method(i);
-    string lcname = c::CamelToLower(method->name());
-    string lcfullname = c::FullNameToLower(descriptor_->full_name());
+    std::string lcname = c::CamelToLower(method->name());
+    std::string lcfullname = c::FullNameToLower(descriptor_->full_name());
     vars_["method"] = lcname;
     vars_["metpad"] = c::ConvertToSpaces(lcname);
     vars_["input_typename"] = c::FullNameToC(method->input_type()->full_name());

@@ -69,6 +69,8 @@
 #define GRPC_C_INTERNAL_COMPILER_C_MESSAGE_H
 
 #include <string>
+#include <boost/scoped_array.hpp>
+#include <boost/scoped_ptr.hpp>
 #include <google/protobuf/stubs/common.h>
 #include <protoc-c/c_field.h>
 #include <protoc-c/c_message.h>
@@ -88,7 +90,7 @@ class MessagePackUnpackGenerator {
  public:
   // See generator.cc for the meaning of dllexport_decl.
   explicit MessagePackUnpackGenerator(const Descriptor* descriptor,
-				      const string& dllexport_decl);
+				      const std::string& dllexport_decl);
   ~MessagePackUnpackGenerator();
 
   // Header stuff.
@@ -104,18 +106,18 @@ class MessagePackUnpackGenerator {
 
  private:
 
-  string GetDefaultValueC(const FieldDescriptor *fd);
+  std::string GetDefaultValueC(const FieldDescriptor *fd);
 
   const Descriptor* descriptor_;
-  string dllexport_decl_;
+  std::string dllexport_decl_;
 
   GOOGLE_DISALLOW_EVIL_CONSTRUCTORS(MessagePackUnpackGenerator);
 };
 
 class GrpcCMessageGenerator {
  public:
-  explicit GrpcCMessageGenerator(const Descriptor* descriptor, 
-			    const string& dllexport_decl);
+  explicit GrpcCMessageGenerator(const Descriptor* descriptor,
+			    const std::string& dllexport_decl);
 
   ~GrpcCMessageGenerator();
 
@@ -123,8 +125,8 @@ class GrpcCMessageGenerator {
 
  private:
   const Descriptor* descriptor_;
-  string dllexport_decl_;
-  scoped_array<scoped_ptr<GrpcCMessageGenerator> > grpc_c_nested_generators_;
+  std::string dllexport_decl_;
+  boost::scoped_array<boost::scoped_ptr<GrpcCMessageGenerator> > grpc_c_nested_generators_;
 };
 
 }  // namespace grpc_c
