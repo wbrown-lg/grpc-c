@@ -30,7 +30,7 @@ static void* thread_body(void* v) {
     size_t buf_len = GPR_ARRAY_SIZE(buf) - 1;
     strncpy(buf, a.name, buf_len);
     buf[buf_len] = '\0';
-    pthread_setname_np(pthread_self(), buf)
+    pthread_setname_np(pthread_self(), buf);
 #endif   // GPR_APPLE_PTHREAD_NAME
   }
   (*a.body)(a.arg);
