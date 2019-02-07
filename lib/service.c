@@ -152,7 +152,7 @@ gc_register_grpc_method (grpc_c_server_t *server, struct grpc_c_method_t *np)
     context->gcc_event.gce_type = GRPC_C_EVENT_RPC_INIT;
     context->gcc_event.gce_data = context;
 
-    context->gcc_cq = grpc_completion_queue_create(NULL);
+    context->gcc_cq = grpc_completion_queue_create(NULL, NULL, NULL);
     grpc_c_grpc_set_cq_callback(context->gcc_cq, gc_handle_server_event);
     context->gcc_data.gccd_server = server;
     context->gcc_state = GRPC_C_SERVER_CALLBACK_WAIT;
@@ -785,7 +785,7 @@ gc_server_create_internal (const char *host, grpc_server_credentials *creds,
     }
     memset(server, 0, sizeof(grpc_c_server_t));
 
-    server->gcs_cq = grpc_completion_queue_create(NULL);
+    server->gcs_cq = grpc_completion_queue_create(NULL, NULL, NULL);
     grpc_c_grpc_set_cq_callback(server->gcs_cq, gc_handle_server_event);
     server->gcs_server = grpc_server_create(args, NULL);
     server->gcs_host = strdup(host);
