@@ -152,7 +152,13 @@ gc_register_grpc_method (grpc_c_server_t *server, struct grpc_c_method_t *np)
     context->gcc_event.gce_type = GRPC_C_EVENT_RPC_INIT;
     context->gcc_event.gce_data = context;
 
-    context->gcc_cq = grpc_completion_queue_create(NULL, NULL, NULL);
+    grpc_completion_queue_attributes attr;
+    attr.version = 1;
+    attr.cq_completion_type = GRPC_CQ_PLUCK;
+    attr.cq_polling_type = GRPC_CQ_NON_POLLING;
+
+    context->gcc_cq = grpc_completion_queue_create(
+        grpc_completion_queue_factory_lookup(&attr), &attr, NULL);
     grpc_c_grpc_set_cq_callback(context->gcc_cq, gc_handle_server_event);
     context->gcc_data.gccd_server = server;
     context->gcc_state = GRPC_C_SERVER_CALLBACK_WAIT;
@@ -785,7 +791,7 @@ gc_server_create_internal (const char *host, grpc_server_credentials *creds,
     }
     memset(server, 0, sizeof(grpc_c_server_t));
 
-    server->gcs_cq = grpc_completion_queue_create(NULL, NULL, NULL);
+    server->gcs_cq = grpc_completion_queue_create_for_next(NULL);
     grpc_c_grpc_set_cq_callback(server->gcs_cq, gc_handle_server_event);
     server->gcs_server = grpc_server_create(args, NULL);
     server->gcs_host = strdup(host);
@@ -898,7 +904,7 @@ grpc_c_context_is_call_cancelled (grpc_c_context_t *context)
 
     gpr_mu_lock(context->gcc_lock);
     ev = grpc_completion_queue_pluck(context->gcc_cq, 
-				     &context->gcc_recv_close_event, deadline, 
+				     &context->gcc_recv_close_event, deadline,
 				     NULL);
     gpr_mu_unlock(context->gcc_lock);
 
