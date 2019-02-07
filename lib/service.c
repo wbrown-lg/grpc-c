@@ -4,6 +4,7 @@
  */
 
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "config.h"
 #include "common/aux_types.h"
@@ -16,6 +17,7 @@
 #include "stream_ops.h"
 #include "thread_pool.h"
 #include "trace.h"
+#include "shim.h"
 
 /*
  * Forward declaration
@@ -155,11 +157,9 @@ gc_register_grpc_method (grpc_c_server_t *server, struct grpc_c_method_t *np)
     grpc_completion_queue_attributes attr;
     attr.version = 1;
     attr.cq_completion_type = GRPC_CQ_PLUCK;
-    attr.cq_polling_type = GRPC_CQ_NON_POLLING;
-
+    attr.cq_polling_type = GRPC_CQ_DEFAULT_POLLING;
     context->gcc_cq = grpc_completion_queue_create(
         grpc_completion_queue_factory_lookup(&attr), &attr, NULL);
-    grpc_c_grpc_set_cq_callback(context->gcc_cq, gc_handle_server_event);
     context->gcc_data.gccd_server = server;
     context->gcc_state = GRPC_C_SERVER_CALLBACK_WAIT;
 
@@ -436,11 +436,13 @@ static int
 gc_handle_server_event_internal (grpc_completion_queue *cq, 
 				 grpc_c_server_t *server, gpr_timespec ts)
 {
+	printf("gc_handle_server_event_internal called: %p\n", cq);
+	fflush(stdout);
     grpc_event ev;
     grpc_c_context_t *context = NULL;
     grpc_completion_queue *server_cq = cq;
     int shutdown = 0, timeout = 0, resolved = 0;
-    gpr_mu *context_lock = NULL;
+    gpr_mu *context_lock = &server->gcs_lock;
     int rc = 0;
 
     while (!shutdown && !timeout) {
@@ -453,7 +455,11 @@ gc_handle_server_event_internal (grpc_completion_queue *cq,
 	if (context_lock) {
 	    gpr_mu_lock(context_lock);
 	}
-	ev = grpc_completion_queue_next(cq, ts, NULL);
+	if ( grpc_c_get_cq_completion_type(cq) == GRPC_CQ_NEXT ) {
+		ev = grpc_completion_queue_next(cq, ts, NULL);
+	} else {
+		return -1;
+	}
 	if (context_lock) {
 	    gpr_mu_unlock(context_lock);
 	}
@@ -625,7 +631,7 @@ gc_run_rpc (void *arg)
     grpc_c_server_t *server = data->server;
     gpr_free(data);
 
-    gc_handle_server_event_internal(cq, server, 
+    gc_handle_server_event_internal(cq, server,
 				    gpr_inf_future(GPR_CLOCK_REALTIME));
 }
 
@@ -791,7 +797,12 @@ gc_server_create_internal (const char *host, grpc_server_credentials *creds,
     }
     memset(server, 0, sizeof(grpc_c_server_t));
 
-    server->gcs_cq = grpc_completion_queue_create_for_next(NULL);
+	grpc_completion_queue_attributes attr;
+    attr.version = 1;
+    attr.cq_completion_type = GRPC_CQ_NEXT;
+    attr.cq_polling_type = GRPC_CQ_DEFAULT_POLLING;
+    server->gcs_cq = grpc_completion_queue_create(
+        grpc_completion_queue_factory_lookup(&attr), &attr, NULL);
     grpc_c_grpc_set_cq_callback(server->gcs_cq, gc_handle_server_event);
     server->gcs_server = grpc_server_create(args, NULL);
     server->gcs_host = strdup(host);
@@ -903,7 +914,7 @@ grpc_c_context_is_call_cancelled (grpc_c_context_t *context)
     if (context->gcc_is_client) return 0;
 
     gpr_mu_lock(context->gcc_lock);
-    ev = grpc_completion_queue_pluck(context->gcc_cq, 
+    ev = grpc_completion_queue_pluck(context->gcc_cq,
 				     &context->gcc_recv_close_event, deadline,
 				     NULL);
     gpr_mu_unlock(context->gcc_lock);

@@ -323,7 +323,6 @@ void
 grpc_c_register_server_disconnect_callback (grpc_c_client_t *client, 
 				    grpc_c_server_disconnect_callback_t *cb);
 
-
 /*
  * Structure definition for grpc-c context
  */

@@ -1194,7 +1194,7 @@ grpc_c_client_request_unary (grpc_c_client_t *client,
     /*
      * We can destroy the completion_queue once it is shutdown
      */
-    while (grpc_completion_queue_next(cq, gpr_inf_past(GPR_CLOCK_REALTIME), 
+    while (grpc_completion_queue_pluck(cq, NULL, gpr_inf_past(GPR_CLOCK_REALTIME),
 				      NULL).type != GRPC_QUEUE_SHUTDOWN)
 	;
     grpc_completion_queue_destroy(cq);
