@@ -19,12 +19,22 @@ libgrpc_c_la_SOURCES = \
     service.c \
     stream_ops.c \
     thread_pool.c \
-    trace.c
+    trace.c \
+    shim.cpp
 
 AM_CFLAGS = \
     -I${srcdir} \
     -I${srcdir}/h \
-    -I${srcdir}/../third_party/protobuf-c
+    -I${srcdir}/../third_party/protobuf-c \
+    -I${srcdir}/../third_party/grpc
+
+AM_CXXFLAGS = \
+    -I${srcdir} \
+    -I${srcdir}/h \
+    -I${srcdir}/../third_party/protobuf-c \
+    -I${srcdir}/../third_party/grpc
+
+
 
 install-exec-hook:
 	@echo Installing header files ... ; \
