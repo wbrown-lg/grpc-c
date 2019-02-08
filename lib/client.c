@@ -80,7 +80,7 @@ gc_client_create_by_host (const char *host, const char *id,
      * Register server connect and disconnect callbacks
      */
     client->gcc_channel_connectivity_cq = \
-        grpc_completion_queue_create_for_next(NULL);
+        grpc_completion_queue_create_for_pluck(NULL);
     if (client->gcc_channel_connectivity_cq == NULL) {
 	gpr_log(GPR_ERROR, "Failed to create completion queue for server "
 		"connect/disconnect notifications");
@@ -201,7 +201,8 @@ grpc_c_client_free (grpc_c_client_t *client)
 
 	if (client->gcc_channel_connectivity_cq) {
 	    grpc_completion_queue_shutdown(client->gcc_channel_connectivity_cq);
-	    while (grpc_completion_queue_next(client->gcc_channel_connectivity_cq, 
+	    while (grpc_completion_queue_pluck(client->gcc_channel_connectivity_cq,
+					      NULL,
 					      gpr_inf_past(GPR_CLOCK_REALTIME), 
 					      NULL).type != GRPC_QUEUE_SHUTDOWN)
 		;

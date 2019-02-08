@@ -7,6 +7,7 @@
 #define GPRC_C_INTERNAL_STREAM_OPS_H
 
 #include <grpc-c/grpc-c.h>
+#include "shim.h"
 #include "context.h"
 
 /*

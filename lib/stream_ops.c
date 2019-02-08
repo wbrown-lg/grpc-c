@@ -129,9 +129,15 @@ gc_stream_read (grpc_c_context_t *context, void **output,
 	    }
 	}
 
-	ev = grpc_completion_queue_pluck(context->gcc_cq, 
-					 &context->gcc_read_event, 
-					 deadline, NULL);
+	if (grpc_c_get_cq_completion_type(context->gcc_cq) == GRPC_CQ_PLUCK ) {
+        ev = grpc_completion_queue_pluck(context->gcc_cq,
+                         &context->gcc_read_event,
+                         deadline, NULL);
+	} else if (grpc_c_get_cq_completion_type(context->gcc_cq) == GRPC_CQ_NEXT ) {
+		ev = grpc_completion_queue_next(context->gcc_cq, deadline, NULL);
+
+	}
+
 	if (ev.success == 0 && ev.type != GRPC_QUEUE_TIMEOUT) {
 	    gpr_log(GPR_ERROR, "Failed to pluck read ops");
 	    context->gcc_read_event.gce_refcount--;
@@ -146,6 +152,11 @@ gc_stream_read (grpc_c_context_t *context, void **output,
 	context->gcc_read_event.gce_refcount--;
 	gpr_mu_unlock(context->gcc_lock);
     }
+
+    grpc_c_event_t *gcev = (grpc_c_event_t *)ev.tag;
+	if ( gcev->gce_type != GRPC_C_EVENT_READ ) {
+		return GRPC_C_FAIL;
+	}
 
     /*
      * Decode the received data. If we are a server, we decode using input
@@ -375,8 +386,8 @@ gc_client_stream_finish (grpc_c_context_t *context, grpc_c_status_t *status,
 	return 1;
     }
 
-    ev = grpc_completion_queue_pluck(context->gcc_cq, context, 
-				     gpr_inf_future(GPR_CLOCK_REALTIME), NULL);
+    ev = grpc_completion_queue_next(context->gcc_cq,
+    		gpr_inf_future(GPR_CLOCK_REALTIME), NULL);
     gpr_mu_unlock(context->gcc_lock);
 
     if (ev.type == GRPC_OP_COMPLETE && ev.success && status != NULL) {
